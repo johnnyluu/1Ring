@@ -106,8 +106,7 @@ void setup() {
   timer.addReminder(4, 13805);
   
   // initialize the digital pin as an output.
-  pinMode(red, OUTPUT);
- // pinMode(buzzer, OUTPUT); 
+  pinMode(red, OUTPUT); 
   
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
@@ -120,7 +119,7 @@ void setup() {
   Serial1.begin(9600);
   Serial1.println("Hello, world?");
   
-  setTime(12,30,00,01,01,2000);
+  setTime(11,30,00,01,01,2000);
   timeIsSet = true;
   //Serial.println(now());
 }
@@ -132,6 +131,7 @@ void loop() {
     Serial1.write(Serial.read());
   }
   
+  // receiving commands from phone
   if (Serial1.available()){
   incomingByte = Serial1.read();
   
@@ -194,6 +194,8 @@ void loop() {
       Serial.write("Receiving command...");
     }
   }
+  
+  // start receiving reminder
   if (command == "new reminder"){
     digitalWrite(red, HIGH);
     command = "Setting new reminder...";
@@ -279,6 +281,13 @@ void loop() {
   //Goes to setTask view once time is set, this will be changed later
   if(displayMode == 1){
     setTask();
+  }
+  
+  if(displayMode == 0){
+    if (detectSwitch()) {
+      changeView();
+      setTask();
+    }
   }
   
 }
@@ -407,6 +416,7 @@ uint32_t Wheel(byte WheelPos) {
   }
 }
 
+
 //Deprecated
 //From a time, displays the clock face
 void timeToDisplay(int hours, int minutes){
@@ -482,6 +492,25 @@ void timeToDisplay(int hours, int minutes){
 //    }
 //  }
 //}
+
+// Change to the next view
+void changeView(){
+  if (displayMode >=2){
+    displayMode = 0;
+  } else {
+    displayMode += 1;
+  }
+}
+  
+// detect if pressing on hour, probably need to add endtime
+boolean detectSwitch(){
+  int touchPoint = softpotToStrip();
+  if (touchPoint != hour() && touchPoint != hour()-12 && touchPoint != -1){
+    return true;
+  } else {
+    return false;
+  }
+}
 
 //Calculates behaviour and display when a new task is being set
 void setTask(){
