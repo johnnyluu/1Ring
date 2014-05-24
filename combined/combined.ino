@@ -60,6 +60,7 @@ uint32_t noColour = strip.Color(0, 0, 0);
 //0 = timeLeft
 //1 = currentTime
 //2 = tasks
+//3 = notification
 int displayMode = 1;
 
 //String used to read serail messages
@@ -89,6 +90,13 @@ int endMin = -1;
 int selected = 0; //1 = hours 2= minutes 3 = endhours 4 = endminutes
 //Flag to check if a task will be removed
 bool negTime = false;
+
+//the values used for a notification
+int previousMode = -1;
+uint32_t notifyColour;
+unsigned long startTime = 0;
+//length in seconds
+const int notifyLength = 3;
 
 void setup() {
   strip.begin();
@@ -277,7 +285,18 @@ void loop() {
   // softpot
   softpotReading = (analogRead(softpotPin)/10) * 10;
   t.update();
- 
+   
+  if(displayMode == 3){
+    int duration = millis() - startTime;
+    if(duration > notifyLength){
+      displayMode = previousMode;
+      previousMode = -1;
+      startTime = 0;
+    }
+    else{
+      blinkDisplay(duration, notifyLength, 10, notifyColour, noColour);
+    }
+  }
   //Goes to setTask view once time is set, this will be changed later
   if(displayMode == 1){
     setTask();
@@ -719,6 +738,53 @@ void cancelSetReminder(){
   selected = 0;
   negTime = false;
   displayMode = 0;
+}
+
+void deleteDisplay(int time, int length, uint32_t colour){
+  int progress = 0;
+  progress = time/(length /12);
+  for(int i = 0; i < 12; i++){
+    if(i <= progress){
+      if(strip.getPixelColor(i) != colour){
+        strip.setPixelColor(i, colour);
+        strip.show();
+      }
+    }
+    else{
+      if(strip.getPixelColor(i) != noColour){
+        strip.setPixelColor(i, noColour);
+        strip.show();
+      }
+    }
+  }
+}
+
+void notification(int dMode, uint32_t colour){
+  displayMode = 3;
+  previousMode = dMode;
+  notifyColour = colour;
+  startTime = millis();
+}
+
+void blinkDisplay(int time, int length, int frequency, 
+   uint32_t colour1, uint32_t colour2){
+  uint32_t colour;
+  if(frequency < 1){
+    colour = colour1;
+  }
+  else if((time/(length/frequency)) % 2){
+    colour = colour2;
+  }
+  else{
+    colour = colour1;
+  }
+  
+  for(int i = 0; i < 12; i++){
+    if(strip.getPixelColor(i) != colour){
+      strip.setPixelColor(i, colour);
+      strip.show();
+    }
+  }
 }
 
 //Converts softpotReading to a strip position (0-11)
