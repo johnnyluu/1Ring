@@ -8,7 +8,7 @@ RTimer::RTimer(int notify)
 	notifyTime = notify;
 }
 
-void RTimer::addReminder(int _c, long _tl, long _etl)
+void RTimer::addReminder(uint32_t _c, long _tl, long _etl)
 {
 	if(remindersLength >= 10){
 		return;
@@ -46,20 +46,29 @@ RTimer::reminder RTimer::getReminder(int _pos){
 	return reminders[_pos];
 }
 
-void RTimer::timerTick(){
-	bool notify = false;
+int RTimer::timerTick(){
+	int notify = -1;
 	for(int i = 0; i < remindersLength; i ++){
 		if(reminders[i].startTimeLeft > notifyTime &&
 			reminders[i].startTimeLeft - 1 <= notifyTime){
-			notify = true;
+			notify = i;
 		}
 		reminders[i].startTimeLeft -= 1;
 		if(reminders[i].startTimeLeft < 0){
 			reminders[i].startTimeLeft = 0;
 		}
+
+		if(reminders[i].endTimeLeft > notifyTime &&
+			reminders[i].endTimeLeft - 1 <= notifyTime){
+			notify = i;
+		}
+		reminders[i].endTimeLeft -= 1;
+		if(reminders[i].endTimeLeft < 0){
+			reminders[i].endTimeLeft = 0;
+		}
 	}
 
-	//return notify;
+	return notify;
 }
 
 long RTimer::timeToLong(int hours, int minutes, int seconds){

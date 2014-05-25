@@ -6,7 +6,7 @@
 #include <RTimer.h>
 #include <SoftwareSerial.h>
 
-RTimer timer(15);
+RTimer timer(5);
 Timer t;
 
 #define PIN 6
@@ -100,7 +100,7 @@ const int notifyLength = 3;
 
 void setup() {
   strip.begin();
-  strip.setBrightness(8);
+  strip.setBrightness(10);
   strip.show(); // Initialize all pixels to 'off'
   
   //Sets softpot and button
@@ -111,7 +111,7 @@ void setup() {
   t.every(1000, tick);
   
   //Default reminder added
-  timer.addReminder(4, 13805);
+  timer.addReminder(hourColour, 300);
   
   // initialize the digital pin as an output.
   pinMode(red, OUTPUT); 
@@ -127,7 +127,7 @@ void setup() {
   Serial1.begin(9600);
   Serial1.println("Hello, world?");
   
-  setTime(11,30,00,01,01,2000);
+  setTime(12,30,00,01,01,2000);
   timeIsSet = true;
   //Serial.println(now());
 }
@@ -288,13 +288,13 @@ void loop() {
    
   if(displayMode == 3){
     int duration = millis() - startTime;
-    if(duration > notifyLength){
+    if(duration / 1000 > notifyLength){
       displayMode = previousMode;
       previousMode = -1;
       startTime = 0;
     }
     else{
-      blinkDisplay(duration, notifyLength, 10, notifyColour, noColour);
+      blinkDisplay(duration, notifyLength * 1000, 10, notifyColour, noColour);
     }
   }
   //Goes to setTask view once time is set, this will be changed later
@@ -340,6 +340,7 @@ void timeLeftToDisplay(int s){
     }
     else{
       if(minsLeft >= i && minsLeft < i + 1){
+        Serial.println(fineMinsLeft);
         if(hrsLeft >= i + 1){
           switch(fineMinsLeft){
           case 1:
@@ -363,6 +364,12 @@ void timeLeftToDisplay(int s){
           case 4:
             if(strip.getPixelColor(i) != bothColour4){
               strip.setPixelColor(i, bothColour4);
+              strip.show();
+            }
+            break;
+          default:
+            if(strip.getPixelColor(i) != noColour){
+              strip.setPixelColor(i, noColour);
               strip.show();
             }
             break;
@@ -394,6 +401,12 @@ void timeLeftToDisplay(int s){
               strip.show();
             }
             break;
+          default:
+            if(strip.getPixelColor(i) != noColour){
+              strip.setPixelColor(i, noColour);
+              strip.show();
+            }
+            break;
           }
         }
       }
@@ -413,7 +426,11 @@ void tick(){
   //yep
   if(timeIsSet){
     //Timeleft for each reminder counts down
-    timer.timerTick();
+    int notify = timer.timerTick();
+    if(notify != -1){
+      
+      notification(displayMode, timer.getReminder(notify).colour);
+    }
     if(displayMode == 0){
       timeLeftToDisplay(timer.getReminder(timer.getNumberOfReminders()-1).startTimeLeft);
     }
@@ -535,15 +552,16 @@ boolean detectSwitch(){
 void setTask(){
   //Basic Clock
   int touchPoint = softpotToStrip();
-  Serial.println(touchPoint);
+  //Serial.println(touchPoint);
   
-  int hours = hour();
-  if(hours >= 12){
-    hours = hours-12;
+  int hours = hour() - 1;
+  if(hours >= 11){
+    hours = hours-11;
   }
-  if(hours == 12){
+  if(hours == 11){
     hours = 0;
   }
+  
     
   if(touchPoint != -1){
     
@@ -569,10 +587,13 @@ void setTask(){
     
     switch (selected){
       case 1:
-        if(startHour == hours && touchPoint < startHour){
-          negTime = true;
+        if(startHour == hours && startHour == 11 && touchPoint == 0){
+          startHour = touchPoint;
         }
         else if(startHour == hours && startHour == 0 && touchPoint != 1){
+          negTime = true;
+        }
+        else if(startHour == hours && touchPoint < startHour){
           negTime = true;
         }
         else{
@@ -581,6 +602,9 @@ void setTask(){
         break;
         
       case 2:
+        if(startMin == minute()/5 && startMin == 11 && touchPoint == 0){
+          startMin = touchPoint;
+        }
         if(startMin == minute()/5 && touchPoint < startMin){
           negTime = true;
         }
@@ -641,27 +665,29 @@ void setTask(){
     
     if(digitalRead(buttonPin) == LOW){
       
-      int startTimeLeft = 0;
-      if(startHour < hour()){
-        startTimeLeft += (12 - (hour() - startHour)) * 3600;
+      unsigned long startTimeLeft = 0;
+      
+    
+      if(startHour < hours && startHour != -1){
+        startTimeLeft += (12 - (hours - startHour)) * 3600;
       }
-      else{
-        startTimeLeft += (startHour - hour()) * 3600;
+      else if(startHour != -1){
+        startTimeLeft += (startHour - hours) * 3600;
       }
-      if(startMin < minute()/5){
+      if(startMin < minute()/5 && startMin != -1){
         startTimeLeft += (12 - (minute()/5 - startMin)) * 300;
       }
-      else{
+      else if(startMin != -1){
         startTimeLeft += (startMin - minute()/5) * 300;
       }
       
-      int endTimeLeft = 0;
+      unsigned long endTimeLeft = 0;
       if(endHour != -1){
-          if(endHour < hour()){
-            endTimeLeft += (12 - (hour() - endHour)) * 3600;
+          if(endHour < hours){
+            endTimeLeft += (12 - (hours - endHour)) * 3600;
           }
           else{
-            endTimeLeft += (endHour - hour()) * 3600;
+            endTimeLeft += (endHour - hours) * 3600;
           }
       }
       if(endMin != -1){
@@ -674,11 +700,13 @@ void setTask(){
       }
       
       //Adds with default color for now
-      if(endTimeLeft > 0){
-        timer.addReminder(1, startTimeLeft, endTimeLeft);
-      }
-      else{
-        timer.addReminder(1, startTimeLeft);
+      if(startTimeLeft > 0){
+        if(endTimeLeft > 0){
+          timer.addReminder(1, startTimeLeft, endTimeLeft);
+        }
+        else{
+          timer.addReminder(1, startTimeLeft);
+        }
       }
       
       startHour = -1;
@@ -790,7 +818,7 @@ void blinkDisplay(int time, int length, int frequency,
 //Converts softpotReading to a strip position (0-11)
 //Returns -1 for nothing being touched
 int softpotToStrip(){
-  if((softpotReading > 500 && softpotReading < 600) || softpotReading > 750){
+  if(softpotReading > 750){
     lastReading = -1;
     noiseBuffer = 0;
     return -1;

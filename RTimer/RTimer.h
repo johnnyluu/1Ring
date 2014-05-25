@@ -10,15 +10,15 @@ class RTimer
 		struct reminder
 			{
 				bool exception;
-				int colour;
+				uint32_t colour;
 				long startTimeLeft;
 				long endTimeLeft;
 			};
-		void addReminder(int _c, long _tl, long _etl = -1);
+		void addReminder(uint32_t _c, long _tl, long _etl = -1);
 		void removeReminder(int _pos);
 		reminder getReminder(int _pos);
 		long timeToLong(int hours, int minutes, int seconds);
-		void timerTick();
+		int timerTick();
 		int getNumberOfReminders();
 	private:
 		int remindersLength;
