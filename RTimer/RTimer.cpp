@@ -8,25 +8,27 @@ RTimer::RTimer(int notify)
 	notifyTime = notify;
 }
 
-void RTimer::addReminder(long _id, uint32_t _c, long _tl, long _etl)
+int RTimer::addReminder(long _id, uint32_t _c, long _tl, long _etl)
 {
-	if(remindersLength >= 50){
-		return;
+	if(remindersLength >= 49){
+		return 0;
 	}
 	if(_etl < 0){
 
 		_etl = _tl;
 	}
 
-	for(int i = remindersLength - 1; i >= 0; i --){
+	for(int i = remindersLength; i >= 0; i --){
 		if(i == 0){
 			reminders[0].id = _id;
 			reminders[0].exception = false;
 			reminders[0].colour = _c;
 			reminders[0].startTimeLeft = _tl;
 			reminders[0].endTimeLeft = _etl;
+			remindersLength++;
+			return 0;
 		}
-		else if(reminders[i].startTimeLeft > _tl){
+		else if(reminders[i].startTimeLeft > _tl && i < 49){
 			reminders[i + 1].id = reminders[i].id;
 			reminders[i + 1].exception = reminders[i].exception;
 			reminders[i + 1].colour = reminders[i].colour;
@@ -34,23 +36,26 @@ void RTimer::addReminder(long _id, uint32_t _c, long _tl, long _etl)
 			reminders[i + 1].endTimeLeft = reminders[i].endTimeLeft;
 		}
 		else if(reminders[i].startTimeLeft == _tl &&
-			reminders[i].endTimeLeft > _etl){
+			reminders[i].endTimeLeft > _etl && i < 49){
 			reminders[i + 1].id = reminders[i].id;
 			reminders[i + 1].exception = reminders[i].exception;
 			reminders[i + 1].colour = reminders[i].colour;
 			reminders[i + 1].startTimeLeft = reminders[i].startTimeLeft;
 			reminders[i + 1].endTimeLeft = reminders[i].endTimeLeft;
 		}
-		else if(reminders[i].startTimeLeft < _tl){
+		else if(reminders[i].startTimeLeft < _tl && reminders[i].id != 0
+			&& i < 49){
 			reminders[i + 1].id = _id;
 			reminders[i + 1].exception = false;
 			reminders[i + 1].colour = _c;
 			reminders[i + 1].startTimeLeft = _tl;
 			reminders[i + 1].endTimeLeft = _etl;
+			remindersLength++;
+			return i + 1;
 		}
 	}
 
-	remindersLength++;
+	return 0;
 
 }
 

@@ -37,7 +37,7 @@ int settingTime = 0;
 //   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
 //   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(13, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(16, PIN, NEO_GRB + NEO_KHZ800);
 
 //List of preset colours
 uint32_t hourColour = strip.Color(255, 0, 0);
@@ -114,6 +114,9 @@ void setup() {
   strip.begin();
   strip.setBrightness(10);
   strip.setPixelColor(12, hourColour);
+  strip.setPixelColor(13, hourColour);
+  strip.setPixelColor(14, hourColour);
+  strip.setPixelColor(15, hourColour);
   strip.show(); // Initialize all pixels to 'off'
   
   //Sets softpot and button
@@ -145,7 +148,6 @@ void setup() {
 }
 
 void loop() {
-  
     //send command to phone
   while (Serial.available()) {
     Serial1.write(Serial.read());
@@ -323,15 +325,13 @@ void loop() {
       changeView();
       setTask();
     }
-    
     else if(digitalRead(buttonPin) == LOW){
       if(!buttonDown){
         buttonDownTime = millis();
       }
       buttonDown = true;
       downTimer = millis() - buttonDownTime;
-      Serial.println(downTimer);
-      if(downTimer > 1000){
+      if(downTimer >= 1000){
         deleteDisplay(downTimer - 1000, 2000, hourColour);
       }
       
@@ -341,9 +341,12 @@ void loop() {
       if(downTimer > 3000){
        timer.removeReminder(currentReminder);
       }
+      else if(downTimer < 1000){
+        //sendMessage("*playstart;" + String(timer.getReminder(currentReminder).id) + "#");
+      }
       downTimer = 0;
       if(timer.getNumberOfReminders() != 0){
-        timeLeftToDisplay(timer.getReminder(timer.getNumberOfReminders()-1).startTimeLeft);
+        timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
       }
       else{
         timeLeftToDisplay(0);
@@ -473,8 +476,9 @@ void tick(){
       notification(displayMode, timer.getReminder(notify).colour);
     }
     if(displayMode == 0 && !buttonDown){
+      Serial.println(timer.getReminder(0).exception);
       if(timer.getNumberOfReminders() != 0){
-        timeLeftToDisplay(timer.getReminder(0).startTimeLeft);
+        timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
       }
       else{
         timeLeftToDisplay(0);
@@ -636,7 +640,7 @@ void setTask(){
         if(startHour == hours && startHour == 11 && touchPoint == 0){
           startHour = touchPoint;
         }
-        else if(startHour == hours && startHour == 0 && touchPoint != 1){
+        else if(startHour == hours && startHour == 0 && touchPoint == 11){
           negTime = true;
         }
         else if(startHour == hours && touchPoint < startHour){
@@ -670,7 +674,7 @@ void setTask(){
           if(startHour == hours && touchPoint < startHour){
             negTime = true;
           }
-          else if(startHour == hours && startHour == 0 && touchPoint != 1){
+          else if(startHour == hours && startHour == 0 && touchPoint == 11){
             negTime = true;
           }
         }
@@ -717,7 +721,7 @@ void setTask(){
       
       downTimer = millis() - buttonDownTime;
       if(downTimer > 500 && !recording){
-        sendMessage("*recordstart;" + String(currentReminder) + "#");
+        sendMessage("*recordstart;" + String(taskId) + "#");
         recording = true;
         for(int i = 0; i < 12; i ++){
           if(strip.getPixelColor(i) != minColour1){
@@ -729,14 +733,14 @@ void setTask(){
     }
     //Button released
     else if(buttonDown){
+      buttonDown = false;
+      buttonDownTime = 0;
       if(downTimer > 500){
         sendMessage("*recordend#");
         recording = false;
-        buttonDown = false;
       }
       else{
         unsigned long startTimeLeft = 0;
-        
       
         if(startHour < hours && startHour != -1){
           startTimeLeft += (12 - (hours - startHour)) * 3600;
@@ -768,14 +772,13 @@ void setTask(){
             endTimeLeft += (endMin - minute()/5) * 300;
           }
         }
-        
         //Adds with default color for now
         if(startTimeLeft > 0){
           if(endTimeLeft > 0){
-            timer.addReminder(now(), 1, startTimeLeft, endTimeLeft);
+            currentReminder = timer.addReminder(taskId, 1, startTimeLeft, endTimeLeft);
           }
           else{
-            timer.addReminder(now(), 1, startTimeLeft);
+            currentReminder = timer.addReminder(taskId, 1, startTimeLeft);
           }
         }
         
@@ -788,9 +791,9 @@ void setTask(){
         displayMode = 0;
         taskId = -1;
         idSet = false;
-        currentReminder = 0;
-        
-        
+        buttonDown = false;
+        buttonDownTime = 0;
+        downTimer = 0;
         
       }
     
@@ -843,7 +846,8 @@ void cancelSetReminder(){
   displayMode = 0;
   taskId = -1;
   idSet = false;
-  currentReminder = 0;
+  buttonDownTime = 0;
+  downTimer = 0;
 }
 
 void deleteDisplay(unsigned long time, unsigned long length, uint32_t colour){
@@ -941,6 +945,9 @@ int softpotToStrip(){
         return 6;
       }
       if(softpotReading == 580){
+        if(lastReading == 0 || lastReading == 11){
+          return lastReading;
+        }
         lastReading = 5;
         return 5;
       }

@@ -15,7 +15,7 @@ class RTimer
 				long startTimeLeft;
 				long endTimeLeft;
 			};
-		void addReminder(long _id, uint32_t _c, long _tl, long _etl = -1);
+		int addReminder(long _id, uint32_t _c, long _tl, long _etl = -1);
 		void removeReminder(int _pos);
 		reminder getReminder(int _pos);
 		long timeToLong(int hours, int minutes, int seconds);
