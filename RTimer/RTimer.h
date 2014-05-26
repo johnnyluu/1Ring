@@ -24,7 +24,7 @@ class RTimer
 	private:
 		int remindersLength;
 		int notifyTime;
-		reminder reminders[50];
+		reminder reminders[20];
 };
 
 #endif

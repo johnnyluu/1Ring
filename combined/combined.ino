@@ -342,7 +342,7 @@ void loop() {
        timer.removeReminder(currentReminder);
       }
       else if(downTimer < 1000){
-        //sendMessage("*playstart;" + String(timer.getReminder(currentReminder).id) + "#");
+        sendMessage("*playstart;" + String(timer.getReminder(currentReminder).id) + "#");
       }
       downTimer = 0;
       if(timer.getNumberOfReminders() != 0){
@@ -975,8 +975,8 @@ int softpotToStrip(){
 }
 
 void sendMessage(String s){
-  char message[1024];
-  s.toCharArray(message, s.length() + 1);
+  char message[64];
+  s.toCharArray(message, 64);
   Serial1.print(message);
   
 }

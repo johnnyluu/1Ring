@@ -3,14 +3,14 @@
 
 RTimer::RTimer(int notify)
 {
-	volatile reminder reminders[50];
+	volatile reminder reminders[20];
 	remindersLength = 0;
 	notifyTime = notify;
 }
 
 int RTimer::addReminder(long _id, uint32_t _c, long _tl, long _etl)
 {
-	if(remindersLength >= 49){
+	if(remindersLength >= 19){
 		return 0;
 	}
 	if(_etl < 0){
