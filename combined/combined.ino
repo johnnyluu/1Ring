@@ -123,10 +123,10 @@ int lastPoint = -1;
 void setup() {
   strip.begin();
   strip.setBrightness(10);
-  strip.setPixelColor(12, hourColour);
+  /*strip.setPixelColor(12, hourColour);
   strip.setPixelColor(13, hourColour);
   strip.setPixelColor(14, hourColour);
-  strip.setPixelColor(15, hourColour);
+  strip.setPixelColor(15, hourColour);*/
   strip.show(); // Initialize all pixels to 'off'
   
   //Sets softpot and button
@@ -420,6 +420,32 @@ void loop() {
     }
   }
   
+  for(int i = 1; i < 4; i ++){
+    int reminderPos = 0;
+    if(i >= timer.getNumberOfReminders()){
+      if(strip.getPixelColor(12 + i) != noColour){
+        strip.setPixelColor(12 + i, noColour);
+        strip.show();
+      }
+    }
+    else if(currentReminder + i >= timer.getNumberOfReminders()){
+      reminderPos = timer.getNumberOfReminders() - (currentReminder + i);
+      uint32_t c = timer.getReminder(reminderPos).colour;
+      if(strip.getPixelColor(12 + i ) != c){
+        strip.setPixelColor(12 + i, c);
+        strip.show();
+      }
+    }
+    else{
+      reminderPos = currentReminder + i;
+      uint32_t c = timer.getReminder(reminderPos).colour;
+      if(strip.getPixelColor(12 + i ) != c){
+        strip.setPixelColor(12 + i, c);
+        strip.show();
+      }
+    }
+  }
+  
 }
 
 //Gets time left in seconds and displays the amount of time left
@@ -428,7 +454,7 @@ void timeLeftToDisplay(int s){
   int minsLeft = (s - hrsLeft * 3600)/300;
   int fineMinsLeft = ((s - hrsLeft * 3600) - minsLeft * 300) / 60;
   
-  for(int i = 0; i < strip.numPixels(); i++){
+  for(int i = 0; i < 12; i++){
     if(hrsLeft >= i + 1 && minsLeft >= i + 1){
 
       if(strip.getPixelColor(i) != bothColour){
