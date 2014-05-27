@@ -881,8 +881,6 @@ void setTask(){
         endMin = -1;
         selected = 0;
         negTime = false;
-        taskId = -1;
-        idSet = false;
         buttonDown = false;
         buttonDownTime = 0;
         downTimer = 0;
@@ -973,6 +971,8 @@ void chooseColour(){
       displayMode = 0;
       setColour = false;
       currentReminder = 0;
+      taskId = -1;
+      idSet = false;
     }
   }
   for(int i = 0; i < 12; i++){
