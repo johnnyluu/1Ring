@@ -337,7 +337,12 @@ void loop() {
   }
   
   if(displayMode == 0){
-    if(strip.getPixelColor(12) != timer.getReminder(currentReminder).colour){
+    if(strip.getPixelColor(12) != noColour && timer.getNumberOfReminders() == 0){
+      strip.setPixelColor(12, noColour);
+      strip.show();
+    }
+    else if(strip.getPixelColor(12) != timer.getReminder(currentReminder).colour &&
+      timer.getNumberOfReminders() != 0){
         strip.setPixelColor(12, timer.getReminder(currentReminder).colour);
         strip.show();
     }
