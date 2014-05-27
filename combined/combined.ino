@@ -61,7 +61,7 @@ uint32_t noColour = strip.Color(0, 0, 0);
 //1 = currentTime
 //2 = tasks
 //3 = notification
-int displayMode = 1;
+int displayMode = 0;
 
 //currentReminder being shown
 int currentReminder = 0;
@@ -96,6 +96,10 @@ unsigned long taskId = -1;
 bool negTime = false;
 bool recording =  false;
 bool idSet =  false;
+bool setColour = false;
+uint32_t currentColour = 0;
+unsigned long startTimeLeft = 0;
+unsigned long endTimeLeft = 0;
 
 //the values used for a notification
 int previousMode = -1;
@@ -109,6 +113,12 @@ boolean buttonDown = false;
 //How long has that button been down to clown?
 unsigned long downTimer = 0;
 unsigned long buttonDownTime = 0;
+
+boolean reminderBrowsing = false;
+boolean touchDown = false;
+unsigned long touchTimer = 0;
+unsigned long touchDownTime = 0;
+int lastPoint = -1;
 
 void setup() {
   strip.begin();
@@ -145,6 +155,7 @@ void setup() {
   //Serial.println(now());
   //Default reminder added
   timer.addReminder(now(), hourColour, 300);
+  timer.addReminder(now() + 1, minColour, 6000);
 }
 
 void loop() {
@@ -317,13 +328,68 @@ void loop() {
       taskId = now();
       idSet = true;
     }
-    setTask();
+    if(!setColour){
+      setTask();
+    }
+    else{
+      chooseColour();
+    }
   }
   
   if(displayMode == 0){
-    if (detectSwitch()) {
-      changeView();
-      setTask();
+    if(strip.getPixelColor(12) != timer.getReminder(currentReminder).colour){
+        strip.setPixelColor(12, timer.getReminder(currentReminder).colour);
+        strip.show();
+    }
+    int point = softpotToStrip();
+    if(point != -1){
+      if(!touchDown){
+        touchDownTime = millis();
+      }
+      if(!reminderBrowsing){
+        touchDown = true;
+        touchTimer = millis() - touchDownTime;
+        if(touchTimer >= 1000 && !reminderBrowsing){
+          //begin browsing
+          reminderBrowsing = true;
+          lastPoint = point;
+        }
+      }
+      else{
+        if((point > lastPoint && (point != 11 && lastPoint != 0)) || 
+          (point == 0 && lastPoint == 11)){
+          currentReminder ++;
+          if(currentReminder > timer.getNumberOfReminders() -1){
+            currentReminder = 0;
+          }
+        }
+        else if((point < lastPoint && (point != 0 && lastPoint != 11)) || 
+          (point == 11 && lastPoint == 0)){
+          currentReminder --;  
+          if(currentReminder < 0){
+            currentReminder = timer.getNumberOfReminders() -1;
+          }
+        }
+        
+        if(point != lastPoint){
+          lastPoint = point;
+          if(timer.getNumberOfReminders() != 0){
+            timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
+          }
+          else{
+            timeLeftToDisplay(0);
+          }
+        }
+      }
+    }
+    else if(touchDown){
+      touchDown = false;
+      downTimer = 0;
+      if(!reminderBrowsing){
+        changeView();
+        setTask();
+      }
+      reminderBrowsing = false;
     }
     else if(digitalRead(buttonPin) == LOW){
       if(!buttonDown){
@@ -476,7 +542,7 @@ void tick(){
       notification(displayMode, timer.getReminder(notify).colour);
     }
     if(displayMode == 0 && !buttonDown){
-      Serial.println(timer.getReminder(0).exception);
+      Serial.println(timer.getReminder(0).colour);
       if(timer.getNumberOfReminders() != 0){
         timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
       }
@@ -740,7 +806,6 @@ void setTask(){
         recording = false;
       }
       else{
-        unsigned long startTimeLeft = 0;
       
         if(startHour < hours && startHour != -1){
           startTimeLeft += (12 - (hours - startHour)) * 3600;
@@ -755,7 +820,6 @@ void setTask(){
           startTimeLeft += (startMin - minute()/5) * 300;
         }
         
-        unsigned long endTimeLeft = 0;
         if(endHour != -1){
             if(endHour < hours){
               endTimeLeft += (12 - (hours - endHour)) * 3600;
@@ -774,12 +838,10 @@ void setTask(){
         }
         //Adds with default color for now
         if(startTimeLeft > 0){
-          if(endTimeLeft > 0){
-            currentReminder = timer.addReminder(taskId, 1, startTimeLeft, endTimeLeft);
-          }
-          else{
-            currentReminder = timer.addReminder(taskId, 1, startTimeLeft);
-          }
+          setColour = true;
+        }
+        else{
+          cancelSetReminder();
         }
         
         startHour = -1;
@@ -788,7 +850,6 @@ void setTask(){
         endMin = -1;
         selected = 0;
         negTime = false;
-        displayMode = 0;
         taskId = -1;
         idSet = false;
         buttonDown = false;
@@ -830,6 +891,12 @@ void setTask(){
       }
     }
   }
+  
+  if(strip.getPixelColor(12) != noColour){
+    strip.setPixelColor(12, noColour);
+    strip.show();
+    
+  }
   }
   
   
@@ -848,6 +915,46 @@ void cancelSetReminder(){
   idSet = false;
   buttonDownTime = 0;
   downTimer = 0;
+}
+
+void chooseColour(){
+  int point = softpotToStrip();
+  if(point != -1){
+    currentColour = Wheel(point * 21);
+  }
+  if(digitalRead(buttonPin) == LOW){
+      if(!buttonDown){
+        buttonDown = true;
+      }
+      
+  }
+  else if(buttonDown){
+    buttonDown = false;
+    if(currentColour != 0){
+      if(endTimeLeft > 0){
+        currentReminder = timer.addReminder(taskId, currentColour, startTimeLeft, endTimeLeft);
+      }
+      else{
+        currentReminder = timer.addReminder(taskId, currentColour, startTimeLeft);
+      }
+      startTimeLeft = 0;
+      endTimeLeft = 0;
+      displayMode = 0;
+      setColour = false;
+      currentReminder = 0;
+    }
+  }
+  for(int i = 0; i < 12; i++){
+    if(strip.getPixelColor(i) != Wheel(i*21)){
+      strip.setPixelColor(i, Wheel(i*21));
+      strip.show();
+    }
+  }
+  
+  if(strip.getPixelColor(12) != currentColour){
+    strip.setPixelColor(12, currentColour);
+    strip.show();
+  }
 }
 
 void deleteDisplay(unsigned long time, unsigned long length, uint32_t colour){

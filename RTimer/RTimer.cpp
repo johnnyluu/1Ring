@@ -19,7 +19,40 @@ int RTimer::addReminder(long _id, uint32_t _c, long _tl, long _etl)
 	}
 
 	for(int i = remindersLength; i >= 0; i --){
-		if(i == 0){
+		if(reminders[i].startTimeLeft > _tl && i < 19){
+			reminders[i + 1].id = reminders[i].id;
+			reminders[i + 1].exception = reminders[i].exception;
+			reminders[i + 1].colour = reminders[i].colour;
+			reminders[i + 1].startTimeLeft = reminders[i].startTimeLeft;
+			reminders[i + 1].endTimeLeft = reminders[i].endTimeLeft;
+			if(i == 0){
+				reminders[0].id = _id;
+				reminders[0].exception = false;
+				reminders[0].colour = _c;
+				reminders[0].startTimeLeft = _tl;
+				reminders[0].endTimeLeft = _etl;
+				remindersLength++;
+				return 0;
+			}
+		}
+		else if(reminders[i].startTimeLeft == _tl &&
+			reminders[i].endTimeLeft > _etl && i < 19){
+			reminders[i + 1].id = reminders[i].id;
+			reminders[i + 1].exception = reminders[i].exception;
+			reminders[i + 1].colour = reminders[i].colour;
+			reminders[i + 1].startTimeLeft = reminders[i].startTimeLeft;
+			reminders[i + 1].endTimeLeft = reminders[i].endTimeLeft;
+			if(i == 0){
+				reminders[0].id = _id;
+				reminders[0].exception = false;
+				reminders[0].colour = _c;
+				reminders[0].startTimeLeft = _tl;
+				reminders[0].endTimeLeft = _etl;
+				remindersLength++;
+				return 0;
+			}
+		}
+		else if(i == 0 && i == remindersLength){
 			reminders[0].id = _id;
 			reminders[0].exception = false;
 			reminders[0].colour = _c;
@@ -28,23 +61,8 @@ int RTimer::addReminder(long _id, uint32_t _c, long _tl, long _etl)
 			remindersLength++;
 			return 0;
 		}
-		else if(reminders[i].startTimeLeft > _tl && i < 49){
-			reminders[i + 1].id = reminders[i].id;
-			reminders[i + 1].exception = reminders[i].exception;
-			reminders[i + 1].colour = reminders[i].colour;
-			reminders[i + 1].startTimeLeft = reminders[i].startTimeLeft;
-			reminders[i + 1].endTimeLeft = reminders[i].endTimeLeft;
-		}
-		else if(reminders[i].startTimeLeft == _tl &&
-			reminders[i].endTimeLeft > _etl && i < 49){
-			reminders[i + 1].id = reminders[i].id;
-			reminders[i + 1].exception = reminders[i].exception;
-			reminders[i + 1].colour = reminders[i].colour;
-			reminders[i + 1].startTimeLeft = reminders[i].startTimeLeft;
-			reminders[i + 1].endTimeLeft = reminders[i].endTimeLeft;
-		}
-		else if(reminders[i].startTimeLeft < _tl && reminders[i].id != 0
-			&& i < 49){
+		else if(reminders[i].startTimeLeft < _tl
+			&& i < 19 && reminders[i].id != 0){
 			reminders[i + 1].id = _id;
 			reminders[i + 1].exception = false;
 			reminders[i + 1].colour = _c;
