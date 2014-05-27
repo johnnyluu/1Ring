@@ -721,12 +721,12 @@ void setTask(){
       selected = 2;
       return;
     }
-    else if(touchPoint == startHour && selected == 0){
+    else if((touchPoint == startHour || touchPoint == endHour) && selected == 0){
       
       selected = 3;
       return;
     }
-    else if(touchPoint == startMin && selected == 0){
+    else if((touchPoint == startMin || touchPoint == endMin) && selected == 0){
       selected = 4;
       return;
     }
