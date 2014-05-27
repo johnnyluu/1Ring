@@ -154,7 +154,7 @@ void setup() {
   timeIsSet = true;
   //Serial.println(now());
   //Default reminder added
-  timer.addReminder(now(), hourColour, 300);
+  timer.addReminder(now(), minColour, 30);
   timer.addReminder(now() + 1, minColour, 6000);
 }
 
@@ -573,7 +573,6 @@ void tick(){
       notification(displayMode, timer.getReminder(notify).colour);
     }
     if(displayMode == 0 && !buttonDown){
-      Serial.println(timer.getReminder(0).colour);
       if(timer.getNumberOfReminders() != 0){
         timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
       }
@@ -712,12 +711,12 @@ void setTask(){
     
   if(touchPoint != -1){
     
-    if(touchPoint == hours && startHour < 0 && selected ==0 ){
+    if(touchPoint == hours && selected ==0 ){
       startHour = touchPoint;
       selected = 1;
       return;
     }
-    else if(touchPoint == minute()/5 && startMin < 0 && selected == 0){
+    else if(touchPoint == minute()/5  && selected == 0){
       startMin = touchPoint;
       selected = 2;
       return;
@@ -767,12 +766,20 @@ void setTask(){
       case 3:
         if(touchPoint < startHour){
           selected = 1;
+          endHour = -1;
           
-          if(startHour == hours && touchPoint < startHour){
-            negTime = true;
+          
+          if(startHour == hours && startHour == 11 && touchPoint == 0){
+          startHour = touchPoint;
           }
           else if(startHour == hours && startHour == 0 && touchPoint == 11){
             negTime = true;
+          }
+          else if(startHour == hours && touchPoint < startHour){
+            negTime = true;
+          }
+          else{
+            startHour = touchPoint;
           }
         }
         else{
@@ -783,7 +790,11 @@ void setTask(){
       case 4:
         if(touchPoint < startMin){
           selected = 2;
+          endMin = -1;
           
+          if(startMin == minute()/5 && startMin == 11 && touchPoint == 0){
+          startMin = touchPoint;
+          }
           if(startMin == minute()/5 && touchPoint < startMin){
             negTime = true;
           }
@@ -791,10 +802,14 @@ void setTask(){
             touchPoint != 1){
             negTime = true;
           }
+          else{
+            startMin = touchPoint;
+          }
         }
         else{
           endMin = touchPoint;
         }
+        break;
        
     }
     
@@ -991,8 +1006,7 @@ void chooseColour(){
 void deleteDisplay(unsigned long time, unsigned long length, uint32_t colour){
   if(time < length){
     int progress = 0;
-    progress = time/(length /12);
-    Serial.println(progress);
+    progress = time/(length /12);;
     for(int i = 0; i < 12; i++){
       if(i <= progress){
         if(strip.getPixelColor(i) != colour){
