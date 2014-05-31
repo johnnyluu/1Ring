@@ -229,10 +229,12 @@ void loop() {
   }
   
   // start receiving reminder
-  if (command == "new reminder"){
-    digitalWrite(red, HIGH);
-    command = "Setting new reminder...";
+  if (command == "newreminder"){
+    Serial.write("OOOOOH DANG");
+    command = "";
     receivingR = 1;
+    
+    
   }
   
   //sync time with phone
@@ -309,6 +311,7 @@ void loop() {
 
   // softpot
   softpotReading = (analogRead(softpotPin)/10) * 10;
+  
   t.update();
    
   if(displayMode == 3){
@@ -410,6 +413,7 @@ void loop() {
     else if(buttonDown){
       buttonDown = false;
       if(downTimer > 3000){
+       sendMessage("*deletereminder;" + String(timer.getReminder(currentReminder).id) + "#");
        timer.removeReminder(currentReminder);
       }
       else if(downTimer < 1000){
@@ -977,9 +981,13 @@ void chooseColour(){
     if(currentColour != 0){
       if(endTimeLeft > 0){
         currentReminder = timer.addReminder(taskId, currentColour, startTimeLeft, endTimeLeft);
+        sendMessage("*addreminder;" + String(taskId) + ";" + String(currentColour) + ";" +
+        String(startTimeLeft) + ";" + String(endTimeLeft) = "#");
       }
       else{
         currentReminder = timer.addReminder(taskId, currentColour, startTimeLeft);
+        sendMessage("*addreminder;" + String(taskId) + ";" + String(currentColour) + ";" +
+        String(startTimeLeft) + ";-1#");
       }
       startTimeLeft = 0;
       endTimeLeft = 0;
