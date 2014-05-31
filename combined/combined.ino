@@ -171,45 +171,7 @@ void loop() {
   //stop receiving command and print out received command after reading #
   if ((char)incomingByte == '#'){
     receivingC = 0;
-    if (command == "Setting new reminder..."){
-      Serial.println(command);
-      command = "New reminder set: ";
-    } else if(command == "New reminder set: cancel"){
-      command = "New reminder cancelled.";
-      Serial.println(command);
-      receivingR = 0;
-      digitalWrite(red, LOW);
-      digitalWrite(red, HIGH);
-      delay(100);
-      digitalWrite(red, LOW);
-    } else if(receivingR == 1){ 
-      Serial.println(command);
-      receivingR = 0;      
-      digitalWrite(red, LOW);
-      digitalWrite(red, HIGH);
-      delay(50);
-      digitalWrite(red, LOW);
-      delay(50);
-      digitalWrite(red, HIGH);
-      delay(50);
-      digitalWrite(red, LOW);
-      delay(50);
-      digitalWrite(red, HIGH);
-      delay(50);
-      digitalWrite(red, LOW);
-    } else if(command == "time synced"){
-      settingTime = 0;
-      Serial.println(command);
-      digitalWrite(red, HIGH);
-      delay(100);
-      digitalWrite(red, LOW);
-    }else {
-      Serial.println(command);
-      digitalWrite(red, HIGH);
-      delay(100);
-      digitalWrite(red, LOW);
-    }
-      
+    handleMessage(command);
   }
   
   
@@ -228,85 +190,7 @@ void loop() {
     }
   }
   
-  // start receiving reminder
-  if (command == "newreminder"){
-    Serial.write("OOOOOH DANG");
-    command = "";
-    receivingR = 1;
-    
-    
-  }
-  
-  //sync time with phone
-  if(command == "time;"){
-    settingTime = 1;
-    command = "";
-  }
-  
-  // parse command and set time
-  if (settingTime == 1 && command.length() == 19){
-    int timeParts[6];
-    int count = 0;
-    char byteMessage[19];
-    command.toCharArray(byteMessage, 19);
-    char* part =  strtok(byteMessage, ";");
-    while(part != NULL){
-      timeParts[count] = atoi(part);
-      count ++;
-      part = strtok(NULL, ":");
-    }
-    setTime(timeParts[0], timeParts[1], timeParts[2], timeParts[3],
-      timeParts[4], timeParts[5]);
-    command = "time synced";
-    //timeIsSet = true;
-    Serial.println(now());
-  }
-//  if (command == "voice reminder"){
-//    
-//  //  countdown & play mario theme song
-//    digitalWrite(red, HIGH);   // turn the LED on (HIGH is the voltage level)
-//    Serial.write("5");
-//    delay(1000);               // wait for a second
-//    digitalWrite(red, LOW);  // turn the LED off by making the voltage LOW
-//    Serial.write("4");
-//    delay(1000);  // wait for a second
-//    digitalWrite(red, HIGH);
-//    Serial.write("3");
-//    delay(1000);
-//    digitalWrite(red, LOW);
-//    Serial.write("2");
-//    delay(1000);
-//    noTone(buzzer);
-//    digitalWrite(red, HIGH);
-//    Serial.println("Super Mario!");
-//    tone(buzzer,660,100);
-//    delay(75);tone(buzzer,660,100);
-//    delay(150);tone(buzzer,660,100);
-//    delay(150);tone(buzzer,510,100);
-//    delay(50);tone(buzzer,660,100);
-//    delay(150);tone(buzzer,770,100);
-//    delay(275);tone(buzzer,380,100);
-//    delay(287);tone(buzzer,510,100);
-//    delay(225);tone(buzzer,380,100);
-//    delay(200);tone(buzzer,320,100);
-//    delay(250);tone(buzzer,440,100);
-//    delay(150);tone(buzzer,480,80);
-//    delay(165);tone(buzzer,450,100);
-//    delay(75);tone(buzzer,430,100);
-//    delay(150);tone(buzzer,380,100);
-//    delay(100);tone(buzzer,660,80);
-//    delay(100);tone(buzzer,760,50);
-//    delay(75);tone(buzzer,860,100);
-//    delay(150);tone(buzzer,700,80);
-//    delay(75);tone(buzzer,760,50);
-//    delay(175);tone(buzzer,660,80);
-//    delay(150);tone(buzzer,520,80);
-//    delay(75);tone(buzzer,580,80);
-//    delay(75);tone(buzzer,480,80);
-//    delay(175);tone(buzzer,510,100);
-//    digitalWrite(red, LOW);
-//    command = "Voice reminder recorded.";
-//  }
+
 }
 
   // softpot
@@ -1139,5 +1023,36 @@ void sendMessage(String s){
   s.toCharArray(message, 64);
   Serial1.print(message);
   
+}
+
+void handleMessage(String s){
+    char* parts[7];
+    int count = 0;
+    char byteMessage[64];
+    s.toCharArray(byteMessage, 64);
+    char* part =  strtok(byteMessage, ";");
+    while(part != NULL){
+      parts[count] = part;
+      count ++;
+      part = strtok(NULL, ";");
+    }
+    if(strncmp(parts[0], "time", 4) == 0){
+      setTime(atoi(parts[1]), atoi(parts[2]), atoi(parts[3]), atoi(parts[4]),
+        atoi(parts[5]), atoi(parts[6]));
+      Serial.println("Time set");
+      Serial.println(now());
+    }
+    else if(strncmp(parts[0], "newreminder", 11) == 0){
+      timer.addReminder(atoi(parts[1]), atoi(parts[2]), atoi(parts[3]), 
+      atoi(parts[4]));
+      Serial.println("Reminder added");
+    }
+    else if(strncmp(parts[0], "deletereminder", 14) == 0){
+      
+    }
+    
+    Serial.println((int) parts[0][5]);
+    //command = "time synced";
+    //timeIsSet = true;
 }
 
