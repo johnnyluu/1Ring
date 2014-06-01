@@ -133,6 +133,9 @@ boolean touchDown = false;
 unsigned long touchTimer = 0;
 unsigned long touchDownTime = 0;
 int lastPoint = -1;
+unsigned long untouchTime = 0;
+unsigned long timeUntouched = 0;
+unsigned long maxUntouchedTime = 30000;
 
 void setup() {
   strip.begin();
@@ -247,7 +250,7 @@ void loop() {
     }
     int point = softpotToStrip();
     if(point != -1){
-      if(!touchDown){
+       if(!touchDown){
         touchDownTime = millis();
       }
       if(!reminderBrowsing){
@@ -296,6 +299,8 @@ void loop() {
       }
     }
     else if(touchDown){
+      timeUntouched = millis();
+      untouchTime = 0;
       touchDown = false;
       downTimer = 0;
       if(!reminderBrowsing){
@@ -317,7 +322,9 @@ void loop() {
     }
     else if(buttonDown){
       buttonDown = false;
-      if(downTimer > 3000){
+      timeUntouched = millis();
+      untouchTime = 0;
+      if(downTimer > 3000 && timer.getNumberOfReminders() != 0){
        sendMessage("*deletereminder;" + String(timer.getReminder(currentReminder).id) + "#");
        timer.removeReminder(currentReminder);
        if(currentReminder > timer.getNumberOfReminders() -1){
@@ -342,6 +349,16 @@ void loop() {
       }
       else{
         timeLeftToDisplay(0, false);
+      }
+    }
+    else{
+      if(currentReminder != 0){
+        untouchTime = millis() - timeUntouched;
+        if(untouchTime >= maxUntouchedTime){
+          currentReminder = 0;
+          timeUntouched = 0;
+          untouchTime = 0;
+        }
       }
     }
   }
