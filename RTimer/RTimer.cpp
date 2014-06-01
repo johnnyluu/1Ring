@@ -99,7 +99,7 @@ RTimer::reminder RTimer::getReminder(int _pos){
 int RTimer::getReminderById(long _id){
 	for(int i = 0; i < remindersLength; i ++){
 		if(reminders[i].id == _id){
-			i;
+			return i;
 		}
 	}
 

@@ -136,7 +136,7 @@ int lastPoint = -1;
 
 void setup() {
   strip.begin();
-  strip.setBrightness(10);
+  strip.setBrightness(25);
   /*strip.setPixelColor(12, hourColour);
   strip.setPixelColor(13, hourColour);
   strip.setPixelColor(14, hourColour);
@@ -168,8 +168,7 @@ void setup() {
   timeIsSet = true;
   //Serial.println(now());
   //Default reminder added
-  timer.addReminder(now(), minColour, 30);
-  timer.addReminder(now() + 1, minColour, 6000);
+  
 }
 
 void loop() {
@@ -200,7 +199,6 @@ void loop() {
     receivingC = 1;
     if(receivingR == 0){
       command = "";
-      Serial.write("Receiving command...");
     }
   }
   
@@ -280,10 +278,19 @@ void loop() {
         if(point != lastPoint){
           lastPoint = point;
           if(timer.getNumberOfReminders() != 0){
-            timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
+            RTimer::reminder r = timer.getReminder(currentReminder);
+            if(r.endTimeLeft != r.startTimeLeft && r.startTimeLeft > 0){
+              timeLeftToDisplay(r.startTimeLeft, false);
+            }
+            else if(r.endTimeLeft != r.startTimeLeft){
+              timeLeftToDisplay(r.startTimeLeft, true);
+            }
+            else{
+              timeLeftToDisplay(r.endTimeLeft, true);
+            }
           }
           else{
-            timeLeftToDisplay(0);
+            timeLeftToDisplay(0, false);
           }
         }
       }
@@ -313,16 +320,28 @@ void loop() {
       if(downTimer > 3000){
        sendMessage("*deletereminder;" + String(timer.getReminder(currentReminder).id) + "#");
        timer.removeReminder(currentReminder);
+       if(currentReminder > timer.getNumberOfReminders() -1){
+         currentReminder --;
+       }
       }
       else if(downTimer < 1000){
         sendMessage("*playstart;" + String(timer.getReminder(currentReminder).id) + "#");
       }
       downTimer = 0;
       if(timer.getNumberOfReminders() != 0){
-        timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
+        RTimer::reminder r = timer.getReminder(currentReminder);
+        if(r.endTimeLeft != r.startTimeLeft && r.startTimeLeft > 0){
+          timeLeftToDisplay(r.startTimeLeft, false);
+        }
+        else if(r.endTimeLeft != r.startTimeLeft){
+          timeLeftToDisplay(r.startTimeLeft, true);
+        }
+        else{
+          timeLeftToDisplay(r.endTimeLeft, true);
+        }
       }
       else{
-        timeLeftToDisplay(0);
+        timeLeftToDisplay(0, false);
       }
     }
   }
@@ -356,30 +375,53 @@ void loop() {
 }
 
 //Gets time left in seconds and displays the amount of time left
-void timeLeftToDisplay(int s){
+void timeLeftToDisplay(int s, bool started){
   int hrsLeft = s/3600;
   int minsLeft = (s - hrsLeft * 3600)/300;
   int fineMinsLeft = ((s - hrsLeft * 3600) - minsLeft * 300) / 60;
   
   for(int i = 0; i < 12; i++){
     if(hrsLeft >= i + 1 && minsLeft >= i + 1){
-
-      if(strip.getPixelColor(i) != bothColour){
-        strip.setPixelColor(i, bothColour);
-        strip.show();
-        
+      
+      if(!started){
+        if(strip.getPixelColor(i) != bothColour){
+          strip.setPixelColor(i, bothColour);
+          strip.show();
+        }
+      }
+      else{
+        if(strip.getPixelColor(i) != eBothColour){
+          strip.setPixelColor(i, eBothColour);
+          strip.show();
+        }
       }
     }
     else if(hrsLeft >= i + 1){
-      if(strip.getPixelColor(i) != hourColour){
-        strip.setPixelColor(i, hourColour);
-        strip.show();
+      if(!started){
+        if(strip.getPixelColor(i) != hourColour){
+          strip.setPixelColor(i, hourColour);
+          strip.show();
+        }
+      }
+      else{
+        if(strip.getPixelColor(i) != eHourColour){
+          strip.setPixelColor(i, eHourColour);
+          strip.show();
+        }
       }
     }
     else if(minsLeft >= i + 1){
-      if(strip.getPixelColor(i) != minColour){
-        strip.setPixelColor(i, minColour);
-        strip.show();
+      if(!started){
+        if(strip.getPixelColor(i) != minColour){
+          strip.setPixelColor(i, minColour);
+          strip.show();
+        }
+      }
+      else{
+        if(strip.getPixelColor(i) != eMinColour){
+          strip.setPixelColor(i, eMinColour);
+          strip.show();
+        }
       }
     }
     else{
@@ -387,27 +429,59 @@ void timeLeftToDisplay(int s){
         if(hrsLeft >= i + 1){
           switch(fineMinsLeft){
           case 1:
-            if(strip.getPixelColor(i) != bothColour1){
-              strip.setPixelColor(i, bothColour1);
-              strip.show();
+            if(!started){
+              if(strip.getPixelColor(i) != bothColour1){
+                strip.setPixelColor(i, bothColour1);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eBothColour1){
+                strip.setPixelColor(i, eBothColour1);
+                strip.show();
+              }
             }
             break;
           case 2:
-            if(strip.getPixelColor(i) != bothColour2){
-              strip.setPixelColor(i, bothColour2);
-              strip.show();
+            if(!started){
+              if(strip.getPixelColor(i) != bothColour2){
+                strip.setPixelColor(i, bothColour2);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eBothColour2){
+                strip.setPixelColor(i, eBothColour2);
+                strip.show();
+              }
             }
             break;
           case 3:
-            if(strip.getPixelColor(i) != bothColour3){
-              strip.setPixelColor(i, bothColour3);
-              strip.show();
+            if(!started){
+              if(strip.getPixelColor(i) != bothColour3){
+                strip.setPixelColor(i, bothColour3);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eBothColour3){
+                strip.setPixelColor(i, eBothColour3);
+                strip.show();
+              }
             }
             break;
           case 4:
-            if(strip.getPixelColor(i) != bothColour4){
-              strip.setPixelColor(i, bothColour4);
-              strip.show();
+            if(!started){
+              if(strip.getPixelColor(i) != bothColour4){
+                strip.setPixelColor(i, bothColour4);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eBothColour4){
+                strip.setPixelColor(i, eBothColour4);
+                strip.show();
+              }
             }
             break;
           default:
@@ -421,27 +495,59 @@ void timeLeftToDisplay(int s){
         else{
           switch(fineMinsLeft){
           case 1:
-            if(strip.getPixelColor(i) != minColour1){
-              strip.setPixelColor(i, minColour1);
-              strip.show();
+            if(!started){
+              if(strip.getPixelColor(i) != minColour1){
+                strip.setPixelColor(i, minColour1);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eMinColour1){
+                strip.setPixelColor(i, eMinColour1);
+                strip.show();
+              }
             }
             break;
           case 2:
-            if(strip.getPixelColor(i) != minColour2){
-              strip.setPixelColor(i, minColour2);
-              strip.show();
+            if(!started){
+              if(strip.getPixelColor(i) != minColour2){
+                strip.setPixelColor(i, minColour2);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eMinColour2){
+                strip.setPixelColor(i, eMinColour2);
+                strip.show();
+              }
             }
             break;
           case 3:
-            if(strip.getPixelColor(i) != minColour3){
-              strip.setPixelColor(i, minColour3);
-              strip.show();
+            if(!started){
+              if(strip.getPixelColor(i) != minColour3){
+                strip.setPixelColor(i, minColour3);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eMinColour3){
+                strip.setPixelColor(i, eMinColour3);
+                strip.show();
+              }
             }
             break;
           case 4:
-            if(strip.getPixelColor(i) != minColour4){
-              strip.setPixelColor(i, minColour4);
-              strip.show();
+            if(!selected){
+              if(strip.getPixelColor(i) != minColour4){
+                strip.setPixelColor(i, minColour4);
+                strip.show();
+              }
+            }
+            else{
+              if(strip.getPixelColor(i) != eMinColour4){
+                strip.setPixelColor(i, eMinColour4);
+                strip.show();
+              }
             }
             break;
           default:
@@ -476,10 +582,19 @@ void tick(){
     }
     if(displayMode == 0 && !buttonDown){
       if(timer.getNumberOfReminders() != 0){
-        timeLeftToDisplay(timer.getReminder(currentReminder).startTimeLeft);
+        RTimer::reminder r = timer.getReminder(currentReminder);
+        if(r.endTimeLeft != r.startTimeLeft && r.startTimeLeft > 0){
+          timeLeftToDisplay(r.startTimeLeft, false);
+        }
+        else if(r.endTimeLeft != r.startTimeLeft){
+          timeLeftToDisplay(r.startTimeLeft, true);
+        }
+        else{
+          timeLeftToDisplay(r.endTimeLeft, true);
+        }
       }
       else{
-        timeLeftToDisplay(0);
+        timeLeftToDisplay(0, false);
       }
     }
   }
@@ -1033,6 +1148,7 @@ int softpotToStrip(){
 }
 
 void sendMessage(String s){
+  Serial.println(s.length());
   char message[64];
   s.toCharArray(message, 64);
   Serial1.print(message);
@@ -1040,6 +1156,7 @@ void sendMessage(String s){
 }
 
 void handleMessage(String s){
+    Serial.println(s);
     char* parts[7];
     int count = 0;
     char byteMessage[64];
@@ -1057,12 +1174,18 @@ void handleMessage(String s){
       Serial.println(now());
     }
     else if(strncmp(parts[0], "newreminder", 11) == 0){
-      timer.addReminder(atoi(parts[1]), atoi(parts[2]), atoi(parts[3]), 
-      atoi(parts[4]));
+      timer.addReminder(atol(parts[1]), atol(parts[2]), atol(parts[3]), 
+      atol(parts[4]));
       Serial.println("Reminder added");
     }
     else if(strncmp(parts[0], "deletereminder", 14) == 0){
-      timer.removeReminder(timer.getReminderById(atoi(parts[1])));
+      int pos = timer.getReminderById(atol(parts[1]));
+      if(pos != -1){
+        timer.removeReminder(pos);
+        if(currentReminder > timer.getNumberOfReminders() -1){
+         currentReminder --;
+        }
+      }
       Serial.println("Reminder removed");
     }
     
