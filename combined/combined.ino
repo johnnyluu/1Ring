@@ -54,6 +54,20 @@ uint32_t bothColour3 = strip.Color(255, 0, 155);
 uint32_t bothColour2 = strip.Color(255, 0, 105);
 uint32_t bothColour1 = strip.Color(255, 0, 55);
 
+uint32_t eHourColour = strip.Color(255, 212, 0);
+
+uint32_t eMinColour = strip.Color(13, 229, 255);
+uint32_t eMinColour4 = strip.Color(60, 237, 255);
+uint32_t eMinColour3 = strip.Color(107, 236, 255);
+uint32_t eMinColour2 = strip.Color(144, 255, 255);
+uint32_t eMinColour1 = strip.Color(255, 255, 255);
+
+uint32_t eBothColour = strip.Color(27, 255, 0);
+uint32_t eBothColour4 = strip.Color(122, 232, 0);
+uint32_t eBothColour3 =  strip.Color(182, 232, 12);
+uint32_t eBothColour2 = strip.Color(228, 232, 0);
+uint32_t eBothColour1 = strip.Color(232, 220, 0);
+
 uint32_t noColour = strip.Color(0, 0, 0);
 
 //Define's the current "mode" of the device
@@ -1048,10 +1062,10 @@ void handleMessage(String s){
       Serial.println("Reminder added");
     }
     else if(strncmp(parts[0], "deletereminder", 14) == 0){
-      
+      timer.removeReminder(timer.getReminderById(atoi(parts[1])));
+      Serial.println("Reminder removed");
     }
     
-    Serial.println((int) parts[0][5]);
     //command = "time synced";
     //timeIsSet = true;
 }

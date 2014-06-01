@@ -96,6 +96,16 @@ RTimer::reminder RTimer::getReminder(int _pos){
 	return reminders[_pos];
 }
 
+int RTimer::getReminderById(long _id){
+	for(int i = 0; i < remindersLength; i ++){
+		if(reminders[i].id == _id){
+			i;
+		}
+	}
+
+	return -1;
+}
+
 int RTimer::timerTick(){
 	int notify = -1;
 	for(int i = 0; i < remindersLength; i ++){
