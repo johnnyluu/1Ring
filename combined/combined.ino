@@ -734,11 +734,11 @@ void setTask(){
   int touchPoint = softpotToStrip();
   //Serial.println(touchPoint);
   
-  int hours = hour() - 1;
-  if(hours >= 11){
-    hours = hours-11;
+  int hours = hour();
+  if(hours >= 12){
+    hours = hours-12;
   }
-  if(hours == 11){
+  if(hours == 12){
     hours = 0;
   }
   
@@ -1190,6 +1190,13 @@ void handleMessage(String s){
         atoi(parts[5]), atoi(parts[6]));
       Serial.println("Time set");
       Serial.println(now());
+      if(timer.getNumberOfReminders() > 0){
+        for(int i = 0; i < timer.getNumberOfReminders(); i ++){
+          RTimer::reminder r = timer.getReminder(i);
+          sendMessage("*addreminder;" + String(r.id) + ";" + String(r.colour) +
+          ";" + String(r.startTimeLeft) + ";" + String(r.endTimeLeft) + "#");
+        }
+      }
     }
     else if(strncmp(parts[0], "newreminder", 11) == 0){
       timer.addReminder(atol(parts[1]), atol(parts[2]), atol(parts[3]), 
