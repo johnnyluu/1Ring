@@ -1012,12 +1012,13 @@ void chooseColour(){
       if(endTimeLeft > 0){
         currentReminder = timer.addReminder(taskId, currentColour, startTimeLeft, endTimeLeft);
         sendMessage("*addreminder;" + String(taskId) + ";" + String(currentColour) + ";" +
-        String(startTimeLeft) + ";" + String(endTimeLeft) = "#");
+        String(startTimeLeft) + ";" + String(endTimeLeft) + "#");
       }
       else{
+        endTimeLeft = -1;
         currentReminder = timer.addReminder(taskId, currentColour, startTimeLeft);
         sendMessage("*addreminder;" + String(taskId) + ";" + String(currentColour) + ";" +
-        String(startTimeLeft) + ";-1#");
+        String(startTimeLeft) + ";" + String(endTimeLeft) + "#");
       }
       startTimeLeft = 0;
       endTimeLeft = 0;
